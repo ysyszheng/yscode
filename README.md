@@ -1,6 +1,6 @@
 MEOW Editor
 =====
-MEOW Editor is a simple text editor for Unix. It is written in C.
+MEOW Editor is a simple text editor.
 
 References
 -----
