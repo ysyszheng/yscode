@@ -1,24 +1,35 @@
-import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QFileDialog, QAction
-from PyQt5.QtGui import QIcon, QTextCursor, QFont
-
-from editor import CustomTextEdit
+import os
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox
+from PyQt5.QtGui import QFont, QIcon
+from view.editor import Editor
+from mode.mode import Mode
+from utils.utils import log
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.editor = Editor()
+        self.mode = self.editor.mode # copy mode from editor
+        self.path = None
         self.initUI()
 
+        self.editor.signal_update_status_bar.connect(self.update_status_bar)
+
     def initUI(self):
-        self.setWindowTitle("Untitled - MEOW Editor")
-        self.setGeometry(300, 300, 800, 600)
-        # self.setWindowIcon(QIcon('icon.png'))
+        self.setGeometry(100, 100, 600, 400)
+        self.setWindowIcon(QIcon('./assets/icons/logo.png'))
 
-        self.text_edit = CustomTextEdit()
-        self.setCentralWidget(self.text_edit)
+        self.set_font()
+        self.set_menu()
 
-        self.statusBar()
+        self.setCentralWidget(self.editor)
+        self.update_title()
 
+        self.statusBar().setStyleSheet("background-color: rgb(31, 34, 39);\
+                                       color: rgb(143, 149, 162);")
+        self.update_status_bar()
+
+    def set_menu(self):
         menu = self.menuBar()
         file_menu = menu.addMenu("File")
         edit_menu = menu.addMenu("Edit")
@@ -35,12 +46,17 @@ class MainWindow(QMainWindow):
         save_action.setShortcut("Ctrl+S")
         file_menu.addAction(save_action)
 
+        save_as_action = QAction("Save As", self)
+        save_as_action.setShortcut("Ctrl+Shift+S")
+        file_menu.addAction(save_as_action)
+
         quit_action = QAction("Quit", self)
         quit_action.setShortcut("Ctrl+Q")
         file_menu.addAction(quit_action)
 
         open_action.triggered.connect(self.open_file)
         save_action.triggered.connect(self.save_file)
+        save_as_action.triggered.connect(self.save_as)
         quit_action.triggered.connect(self.quit_app)
 
         # Edit Menu
@@ -53,10 +69,6 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(redo_action)
 
         # View Menu
-        toggle_toolbar_action = QAction("Toggle Toolbar", self)
-        toggle_toolbar_action.setShortcut("Ctrl+T")
-        view_menu.addAction(toggle_toolbar_action)
-
         toggle_statusbar_action = QAction("Toggle Statusbar", self)
         toggle_statusbar_action.setShortcut("Ctrl+Shift+T")
         view_menu.addAction(toggle_statusbar_action)
@@ -80,7 +92,7 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def set_font(self):
-        font = QFont("Courier New")
+        font = QFont("Monaco", 14)
         font.setStyleHint(QFont.Monospace)
         font.setFixedPitch(True)
         self.editor.setFont(font)
@@ -89,14 +101,42 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(self, 'Open File')
         if file_path:
             with open(file_path, 'r') as file:
-                self.text_edit.setText(file.read())
+                self.editor.setPlainText(file.read())
+            self.path = file_path
+            self.update_title()
 
     def save_file(self):
+        if self.path is None:
+            self.save_as()
+        else:
+            with open(self.path, 'w') as file:
+                file.write(self.editor.toPlainText())
+
+    def save_as(self):
         file_path, _ = QFileDialog.getSaveFileName(self, 'Save File')
         if file_path:
             with open(file_path, 'w') as file:
-                file.write(self.text_edit.toPlainText())
+                file.write(self.editor.toPlainText())
+            self.path = file_path
+            self.update_title()
 
     def quit_app(self):
-        pass
-    
+        if self.editor.document().isModified():
+            reply = QMessageBox.question(self, "Save?", "Do you want to save before quitting?", QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if reply == QMessageBox.Yes:
+                self.save_file()
+                self.close()
+            elif reply == QMessageBox.No:
+                self.close()
+        else:
+            self.close()
+
+    def update_title(self):
+        self.setWindowTitle("%s - YSCODE" % (os.path.basename(self.path) if self.path else "Untitled"))
+
+    def update_status_bar(self):
+        if self.mode != 4: # if not in command mode
+            self.statusBar().showMessage(f"-- {self.mode.get_mode_name()} --")
+        else:
+            self.statusBar().showMessage(f":")
+        log(self.mode.get_mode_name())

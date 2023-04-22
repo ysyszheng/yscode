@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    app.setApplicationName("MEOW Editor")
+    app.setApplicationName("YSCODE")
     window = MainWindow()
     window.show()
     app.exec_()
