@@ -78,26 +78,31 @@ class ToolBar(QToolBar):
         # find and replace
         button_find = QAction(QIcon("./assets/icon/find"), "Find", self)
         button_find.setStatusTip("Find")
-
-        button_replace = QAction("Replace", self)
-        button_replace.setStatusTip("Replace")
-
-        button_replace_all = QAction("Replace All", self)
-        button_replace_all.setStatusTip("Replace All")
+        button_find.setEnabled(False)
 
         button_before = QAction(QIcon("./assets/icon/before"), "Before", self)
         button_before.setStatusTip("Find Before")
+        button_before.triggered.connect(wd.fnd_before)
 
         button_next = QAction(QIcon("./assets/icon/next"), "Next", self)
         button_next.setStatusTip("Find Next")
+        button_next.triggered.connect(wd.fnd_next)
 
-        # self.addWidget(wd.find_bar)
+        button_replace = QAction(QIcon("./assets/icon/replace"),"Replace", self)
+        button_replace.setStatusTip("Replace")
+        button_replace.triggered.connect(wd.rpl)
+
+        button_replace_all = QAction(QIcon("./assets/icon/replace_all"), "Replace All", self)
+        button_replace_all.setStatusTip("Replace All")
+        button_replace_all.triggered.connect(wd.rpl_all)
+
         self.addAction(button_find)
-        # self.addWidget(wd.replace_bar)
-        self.addAction(button_replace)
-        self.addAction(button_replace_all)
+        self.addWidget(wd.find_bar)
         self.addAction(button_before)
         self.addAction(button_next)
+        self.addWidget(wd.replace_bar)
+        self.addAction(button_replace)
+        self.addAction(button_replace_all)
 
         # miscellaneous
         self.addSeparator()

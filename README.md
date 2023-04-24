@@ -2,6 +2,8 @@ YSCODE
 =====
 A Smiple Code Editor
 
+![YSCODE](./assets/img/demo.png)
+
 Env
 -----
 ```bash
@@ -15,8 +17,8 @@ TODO
 - [x] Highlight Current Line
 - [x] File open/save/edit
 - [x] Toolbar
-- [ ] Find and Replace
-- [ ] Syntax Highlighting
+- [x] Find and Replace
+- [x] Syntax Highlighting
 - [ ] Add Terminal
 
 References

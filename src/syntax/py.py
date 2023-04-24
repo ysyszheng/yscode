@@ -1,4 +1,7 @@
-'''highlighting for python code'''
+'''highlighting for python code
+Modified from the original code by Axel Erfurt
+Fixed some bugs and added some features
+'''
 
 import sys
 from PyQt5.QtCore import QRegExp
@@ -18,22 +21,21 @@ def format(color, style=''):
         _format.setFontItalic(True)
         _format.setFontWeight(QFont.Bold)
     return _format
+
 mybrawn = ("#7E5916")
 # Syntax styles that can be shared by all languages
 STYLES = {
-    'keyword': format('#2C2CC8', 'bold'),
-    'operator': format('darkred'),
-    'brace': format('darkred'),
-    'defclass': format('#cc0000', 'bold'),
-    'classes': format('#cc0000', 'bold'),
-    'Qtclass': format('black', 'bold'),
-    'string': format(mybrawn),
-    'string2': format('#42923b', 'italic'),
-    'comment': format('#42923b', 'italic'),
-    'self': format('#D63030', 'italicbold'),
-    'selfnext': format('#2e3436', 'bold'),
-    'Qnext': format('#2e3436', 'bold'),
-    'numbers': format('#C82C2C'),
+    'keyword': format('#bb7fd7'),
+    'operator': format('#6eb4c0'),
+    'brace': format('#c79a6d'),
+    'defclass': format('#72aee9'),
+    'classes': format('#dabc81'),
+    'string': format('#a1c181'),
+    'string2': format('#a1c181'),
+    'comment': format('#80838d', 'italic'),
+    'self': format('#dabc81','italic'),
+    'next': format('#70abe5'),
+    'numbers': format('#c0956a'),
 }
 class Highlighter(QSyntaxHighlighter):
     '''Syntax highlighter for the Python language.
@@ -103,20 +105,14 @@ class Highlighter(QSyntaxHighlighter):
             # 'def' followed by an word
             (r'\bdef\b\s*(\w+)', 1, STYLES['defclass']), ### (r'\bdef\b\s*(\w+)', 1, STYLES['defclass']),
 
-            # 'self.' followed by an word
-            (r'\bself\b)', 1, STYLES['selfnext']), ### (r'\bself.\b\s*(\w+)', 1, STYLES['selfnext']),
-
-            # 'Q' followed by an word
-            (r'\b[Q.]\b\s*(\w+)', 1, STYLES['Qnext']),
+            # . followed by an word
+            (r'\b.\b\s*(\w+)', 1, STYLES['next']),
 
             # 'class' followed by an identifier
             (r'\bclass\b\s*(\w+)', 1, STYLES['classes']),
 
             # From '#' until a newline
             (r'#[^\n]*', 0, STYLES['comment']),
-
-            # 'Q'  word
-            #(r'\\bQ[A-Za-z]+\\b', 1, STYLES['Qtclass']), #(QRegExp("\\bQ[A-Za-z]+\\b")
         ]
 
         # Build a QRegExp for each pattern

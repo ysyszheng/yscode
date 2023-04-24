@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QPlainTextEdit, QTextEdit
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor, QTextFormat, QPainter
 from view.bar import LineNumberBar, ToolBar
-from utils.utils import log, wlecome_text
+from utils.utils import log, welcome_text
 
 
 class Editor(QPlainTextEdit):
@@ -23,7 +23,7 @@ class Editor(QPlainTextEdit):
             color: rgb(171, 177, 189);")
 
     def welcome(self):
-        self.setPlainText(wlecome_text)
+        self.setPlainText(welcome_text)
         self.dispaly_welcome = True
         self.setReadOnly(True)
 

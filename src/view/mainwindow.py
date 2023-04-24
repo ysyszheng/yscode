@@ -1,6 +1,6 @@
 import os
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox
-from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox, QLineEdit
+from PyQt5.QtGui import QFont, QIcon, QTextDocument, QTextCursor
 from view.editor import Editor
 from view.bar import ToolBar
 from utils.utils import log
@@ -13,11 +13,18 @@ class MainWindow(QMainWindow):
         self.editor = Editor()
         self.hightlighter = PythonHighlighter(self.editor.document())
         self.path = None
+        self.find_bar = QLineEdit(self)
+        self.replace_bar = QLineEdit(self)
+        self.fnd = False
+
         self.initUI()
         self.update_title()
         self.update_status_bar()
 
         self.editor.cursorPositionChanged.connect(self.update_status_bar)
+        self.editor.cursorPositionChanged.connect(self.reset_fnd)
+        self.find_bar.returnPressed.connect(self.fnd_next)
+        self.replace_bar.returnPressed.connect(self.rpl)
 
     def initUI(self):
         self.setGeometry(100, 100, 600, 400)
@@ -25,12 +32,14 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.editor)
         self.statusBar().setStyleSheet("background-color: rgb(31, 34, 39);\
                                        color: rgb(143, 149, 162);")
-
         self.set_font()
         self.set_menu()
-
         toolbar = ToolBar(self)
         self.addToolBar(toolbar)
+        self.find_bar.setPlaceholderText("Enter to find")
+        self.replace_bar.setPlaceholderText("Enter to replace")
+        self.find_bar.setFixedWidth(150)
+        self.replace_bar.setFixedWidth(150)
 
     def set_menu(self):
         menu = self.menuBar()
@@ -173,3 +182,62 @@ class MainWindow(QMainWindow):
         QMessageBox.information(
             self, "About YSCODE", "YSCODE is a simple text editor.<br>Developed by Yusen Zheng.")
 
+    def reset_fnd(self):
+        self.fnd = False
+
+    def fnd_before(self):
+        if self.find_bar.text() != "":
+            if not self.editor.find(self.find_bar.text(), QTextDocument.FindBackward):
+                self.editor.moveCursor(QTextCursor.End)
+                if self.editor.find(self.find_bar.text(), QTextDocument.FindBackward):
+                    self.fnd = True
+                else:
+                    self.fnd = False
+            else:
+                self.fnd = True
+        return self.fnd
+
+    def fnd_next(self):
+        if self.find_bar.text() != "":
+            if not self.editor.find(self.find_bar.text()):
+                self.editor.moveCursor(QTextCursor.Start)
+                if self.editor.find(self.find_bar.text()):
+                    self.fnd = True
+                else:
+                    self.fnd = False
+            else:
+                self.fnd = True
+        return self.fnd
+        
+    def fnd_all(self):
+        if self.find_bar.text() != "":
+            # get current cursor position
+            current_cursor_pos = self.editor.textCursor().position()
+            # create a new QTextCursor to search from the beginning
+            search_cursor = QTextCursor(self.editor.document())
+            found_cursor = QTextCursor(self.editor.document())
+            search_cursor.movePosition(QTextCursor.Start)
+            # loop until no more matches are found
+            while search_cursor.hasSelection() or not search_cursor.atEnd():
+                search_cursor = self.editor.document().find(self.find_bar.text(), search_cursor, QTextDocument.FindCaseSensitively)
+                # highlight matching text
+                if search_cursor.hasSelection():
+                    found_cursor.setPosition(search_cursor.selectionStart())
+                    found_cursor.setPosition(search_cursor.selectionEnd(), QTextCursor.KeepAnchor)
+                    self.editor.setTextCursor(found_cursor)
+                else:
+                    break
+            # reset cursor to its original position
+            new_cursor = self.editor.textCursor()
+            new_cursor.setPosition(current_cursor_pos)
+            self.editor.setTextCursor(new_cursor)
+
+    def rpl(self):
+        if self.find_bar.text() != "" and self.fnd:
+            self.editor.textCursor().insertText(self.replace_bar.text())
+        self.fnd_next()
+
+    def rpl_all(self):
+        if self.find_bar.text() != "":
+            while self.fnd_next():
+                self.editor.textCursor().insertText(self.replace_bar.text())
