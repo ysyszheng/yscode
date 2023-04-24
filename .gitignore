@@ -1,5 +1,6 @@
 # Personal config
 test/
+tmp/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
