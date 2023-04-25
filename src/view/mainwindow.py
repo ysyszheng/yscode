@@ -210,6 +210,8 @@ class MainWindow(QMainWindow):
     def open_folder(self):
         dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
         if dir_path:
+            # show the selected directory in the tree view
+            # dont only show the files in the selected directory
             self.model.setRootPath(dir_path)
             self.tree.setRootIndex(self.model.index(dir_path))
             self.tree.sortByColumn(0, Qt.AscendingOrder)

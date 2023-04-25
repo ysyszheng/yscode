@@ -32,9 +32,10 @@ TODO
 - [ ] Add Terminal
 - [x] File Tree
 - [x] Right Click Menu
-- [ ] Auto Indentation
+- [x] Auto Indentation
 - [x] Scrollbar
-- [ ] Font Size
+- [x] Font Size
+- [x] Toggle Sidebar
 
 References
 -----

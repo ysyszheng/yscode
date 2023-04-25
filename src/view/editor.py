@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QPlainTextEdit, QTextEdit
 from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtGui import QColor, QTextFormat, QPainter
+from PyQt5.QtGui import QColor, QTextFormat, QPainter, QTextBlockFormat
 from view.bar import LineNumberBar
 from utils.utils import log, welcome_text
 
@@ -10,6 +10,7 @@ class Editor(QPlainTextEdit):
         super().__init__(parent)
         self.dispaly_welcome = False
         self.path = None
+        self.blockFormat = QTextBlockFormat()
         self.initUI()
         
         self.lineNumberBar = LineNumberBar(self)
@@ -95,6 +96,12 @@ class Editor(QPlainTextEdit):
             self.lineNumberBar.update()
         self.setExtraSelections(extraSelections)
 
+    def indent(self):
+        cursor = self.textCursor()
+        cursor.beginEditBlock()
+        cursor.insertText("    ")
+        cursor.endEditBlock()
+
     def keyPressEvent(self, event):
         if self.dispaly_welcome:
             self.setPlainText("")
@@ -104,4 +111,17 @@ class Editor(QPlainTextEdit):
         if event.key() == Qt.Key_Tab:
             self.textCursor().insertText("    ")
             return
-        super().keyPressEvent(event)
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            cursor = self.textCursor()
+            block = cursor.block()
+            previous_text = block.text()
+            index = 0
+            while index < len(previous_text) and previous_text[index] == " ":
+                index += 1
+            previous_indent = previous_text[:index]
+            self.blockFormat = QTextBlockFormat()
+            self.blockFormat.setIndent(index / 4)
+            cursor.insertBlock(self.blockFormat)
+            cursor.insertText(previous_indent)
+        else:
+            super().keyPressEvent(event)
