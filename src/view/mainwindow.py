@@ -4,7 +4,7 @@ from PyQt5.QtGui import QFont, QIcon, QTextDocument, QTextCursor
 from PyQt5.QtCore import QProcess, Qt, QFileInfo
 from view.editor import Editor
 from view.bar import ToolBar
-from utils.utils import log, is_binary
+from utils.utils import log
 from syntax.py import Highlighter as PythonHighlighter
 
 
@@ -72,6 +72,7 @@ class MainWindow(QMainWindow):
         self.splitter.addWidget(self.tree)
         self.splitter.addWidget(self.editor)
         self.splitter.setSizes([self.width() * 0.2, self.width() * 0.8])
+        self.tree.hide()
 
     def set_menu(self):
         menu = self.menuBar()
@@ -223,6 +224,13 @@ class MainWindow(QMainWindow):
     def close_file(self):
         self.path = None
         self.editor.setPlainText("")
+        self.update_title()
+
+    def close_folder(self):
+        self.dir = None
+        self.path = None
+        self.editor.setPlainText("")
+        self.tree.hide()
         self.update_title()
 
     def quit_app(self):

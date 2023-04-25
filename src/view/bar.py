@@ -45,10 +45,15 @@ class ToolBar(QToolBar):
         button_save_as.triggered.connect(wd.save_as)
         self.addAction(button_save_as)
 
-        button_close = QAction(QIcon("./assets/icon/close"), "Close File", self)
-        button_close.setStatusTip("Close File")
-        button_close.triggered.connect(wd.close_file)
-        self.addAction(button_close)
+        button_close_file = QAction(QIcon("./assets/icon/close_file"), "Close File", self)
+        button_close_file.setStatusTip("Close File")
+        button_close_file.triggered.connect(wd.close_file)
+        self.addAction(button_close_file)
+
+        button_close_folder = QAction(QIcon("./assets/icon/close_folder"), "Close Folder", self)
+        button_close_folder.setStatusTip("Close Folder")
+        button_close_folder.triggered.connect(wd.close_folder)
+        self.addAction(button_close_folder)
 
         self.addSeparator()
 
