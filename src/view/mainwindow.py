@@ -142,34 +142,44 @@ class MainWindow(QMainWindow):
         redo_action.triggered.connect(self.editor.redo)
 
         # View Menu
-        toggle_statusbar_action = QAction("Toggle Statusbar", self)
-        toggle_statusbar_action.setShortcut("Ctrl+Shift+T")
-        view_menu.addAction(toggle_statusbar_action)
-
         toggle_sidebar_action = QAction("Toggle Sidebar", self)
-        toggle_sidebar_action.setShortcut("Ctrl+Alt+T")
+        toggle_sidebar_action.setShortcut("Ctrl+B")
         view_menu.addAction(toggle_sidebar_action)
+        toggle_sidebar_action.triggered.connect(self.toggle_sidebar)
+
+        zoom_in_action = QAction("Zoom In", self)
+        zoom_in_action.setShortcut("Ctrl++")
+        view_menu.addAction(zoom_in_action)
+        zoom_in_action.triggered.connect(self.editor.zoomIn)
+
+        zoom_out_action = QAction("Zoom Out", self)
+        zoom_out_action.setShortcut("Ctrl+-")
+        view_menu.addAction(zoom_out_action)
+        zoom_out_action.triggered.connect(self.editor.zoomOut)
 
         # Window Menu
         minimize_action = QAction("Minimize", self)
         minimize_action.setShortcut("Ctrl+M")
         window_menu.addAction(minimize_action)
+        minimize_action.triggered.connect(self.showMinimized)
 
         maximize_action = QAction("Maximize", self)
         maximize_action.setShortcut("Ctrl+Shift+M")
         window_menu.addAction(maximize_action)
+        maximize_action.triggered.connect(self.showMaximized)
 
         # Help Menu
         about_action = QAction("About", self)
         about_action.setShortcut("Ctrl+I")
         help_menu.addAction(about_action)
+        about_action.triggered.connect(self.show_info)
 
     def set_font(self):
         font = QFont("Consolas", 14)
         font.setStyleHint(QFont.Monospace)
         font.setFixedPitch(True)
         self.editor.setFont(font)
-
+        
     def open_file(self):
         if self.editor.document().isModified():
             reply = QMessageBox.question(self, "Save?", "Do you want to save before closing?",
@@ -392,6 +402,12 @@ class MainWindow(QMainWindow):
                     shutil.move(file_path, new_file_path)
             except OSError as e:
                 QMessageBox.warning(self, "Error", f"Failed to rename: {e}")
+
+    def toggle_sidebar(self):
+        if self.tree.isVisible():
+            self.tree.hide()
+        else:
+            self.tree.show()
 
     def show_terminal(self): # TODO
         self.process.start("terminal")
