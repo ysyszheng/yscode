@@ -7,7 +7,17 @@ A tiny Code Editor
 Env
 -----
 ```bash
-$ conda create -n <env-name> --file requirements.txt
+# Use conda to create a virtual environment
+$ conda create -n <env> --file requirements.txt
+$ conda activate <env>
+# or use pip
+$ pip install PyQt5 
+```
+
+Run
+-----
+```bash
+$ python3 ./src/main.py
 ```
 
 TODO
@@ -21,6 +31,10 @@ TODO
 - [ ] Syntax Highlighting
 - [ ] Add Terminal
 - [x] File Tree
+- [x] Right Click Menu
+- [ ] Auto Indentation
+- [x] Scrollbar
+- [ ] Font Size
 
 References
 -----

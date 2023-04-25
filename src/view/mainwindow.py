@@ -1,7 +1,8 @@
 import os
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox, QLineEdit, QFileSystemModel, QTreeView, QSplitter
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox, QLineEdit, QFileSystemModel, QTreeView, QSplitter, QMenu, QInputDialog
 from PyQt5.QtGui import QFont, QIcon, QTextDocument, QTextCursor
-from PyQt5.QtCore import QProcess, Qt, QFileInfo
+from PyQt5.QtCore import QProcess, Qt, QFileInfo, QDir
+import shutil
 from view.editor import Editor
 from view.bar import ToolBar
 from utils.utils import log
@@ -15,13 +16,12 @@ class MainWindow(QMainWindow):
         self.editor = Editor()
         self.hightlighter = PythonHighlighter(self.editor.document())
         self.dir = None
-        self.path = None
         self.find_bar = QLineEdit(self)
         self.replace_bar = QLineEdit(self)
         self.jump_bar = QLineEdit(self)
-        self.process = QProcess(self)
+        self.process = QProcess(self) # TODO
         self.model = QFileSystemModel()
-        self.model.setRootPath('') # TODO
+        self.model.setRootPath('')
         self.tree = QTreeView()
         self.fnd = False
 
@@ -35,9 +35,14 @@ class MainWindow(QMainWindow):
         self.jump_bar.returnPressed.connect(self.jump)
         self.replace_bar.returnPressed.connect(self.rpl)
         self.tree.doubleClicked.connect(self.open_file_from_tree)
+        self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree.customContextMenuRequested.connect(self.show_tree_menu)
+        # self.process.readyReadStandardOutput.connect(self.read_output)
+        # self.process.readyReadStandardError.connect(self.read_error)
+        # self.process.finished.connect(self.process_finished)
 
     def initUI(self):
-        self.setGeometry(100, 100, 600, 400)
+        # self.setGeometry(100, 100, 600, 400)
         self.setWindowIcon(QIcon('./assets/icons/logo.png'))
         
         self.setCentralWidget(self.splitter)
@@ -160,18 +165,30 @@ class MainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def set_font(self):
-        font = QFont("Monaco", 14)
+        font = QFont("Consolas", 14)
         font.setStyleHint(QFont.Monospace)
         font.setFixedPitch(True)
         self.editor.setFont(font)
 
     def open_file(self):
+        if self.editor.document().isModified():
+            reply = QMessageBox.question(self, "Save?", "Do you want to save before closing?",
+                                         QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if reply == QMessageBox.Yes:
+                self.save_file()
+                self.open_file_helper()
+            elif reply == QMessageBox.No:
+                self.open_file_helper()
+        else:
+            self.open_file_helper()
+
+    def open_file_helper(self):
         file_path, _ = QFileDialog.getOpenFileName(self, 'Open File')
         if file_path:
             try:
                 with open(file_path, 'r') as file:
                     self.editor.setPlainText(file.read())
-                self.path = file_path
+                self.editor.path = file_path
                 self.dir = None
                 self.update_title()
             except UnicodeDecodeError:
@@ -187,7 +204,6 @@ class MainWindow(QMainWindow):
             self.tree.setRootIndex(self.model.index(dir_path))
             self.tree.sortByColumn(0, Qt.AscendingOrder)
             self.dir = dir_path
-            self.path = None
             self.update_title()
             self.tree.show()
         if self.editor.dispaly_welcome:    
@@ -199,18 +215,19 @@ class MainWindow(QMainWindow):
         if QFileInfo(file_path).isDir():
             return
         try:
+            self.close_file()
             with open(file_path, 'r') as file:
                 self.editor.setPlainText(file.read())
-            self.path = file_path
+            self.editor.path = file_path
             self.update_title()
         except UnicodeDecodeError:
             QMessageBox.warning(self, "Warning", "Cannot open non-UTF-8 text files")
 
     def save_file(self):
-        if self.path is None:
+        if self.editor.path is None:
             self.save_as()
         else:
-            with open(self.path, 'w') as file:
+            with open(self.editor.path, 'w') as file:
                 file.write(self.editor.toPlainText())
 
     def save_as(self):
@@ -218,17 +235,29 @@ class MainWindow(QMainWindow):
         if file_path:
             with open(file_path, 'w') as file:
                 file.write(self.editor.toPlainText())
-            self.path = file_path
+            self.editor.path = file_path
             self.update_title()
 
     def close_file(self):
-        self.path = None
+        if self.editor.document().isModified():
+            reply = QMessageBox.question(self, "Save?", "Do you want to save before closing?",
+                                         QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if reply == QMessageBox.Yes:
+                self.save_file()
+                self.close_file_helper()
+            elif reply == QMessageBox.No:
+                self.close_file_helper()
+        else:
+            self.close_file_helper()
+    
+    def close_file_helper(self):
+        self.editor.path = None
         self.editor.setPlainText("")
         self.update_title()
 
     def close_folder(self):
         self.dir = None
-        self.path = None
+        self.editor.path = None
         self.editor.setPlainText("")
         self.tree.hide()
         self.update_title()
@@ -247,7 +276,7 @@ class MainWindow(QMainWindow):
 
     def update_title(self):
         self.setWindowTitle(
-            "%s - %s" % (os.path.basename(self.path) if self.path else "Untitled",
+            "%s - %s" % (os.path.basename(self.editor.path) if self.editor.path else "Untitled",
              os.path.basename(self.dir) if self.dir else "YSCODE"))
 
     def update_status_bar(self):
@@ -301,6 +330,68 @@ class MainWindow(QMainWindow):
             for _ in range(int(self.jump_bar.text()) - 1):
                 self.editor.moveCursor(QTextCursor.Down)
             self.editor.moveCursor(QTextCursor.StartOfLine)
+
+    def show_tree_menu(self, pos):
+        index = self.tree.indexAt(pos)
+        if not index.isValid():
+            return
+        # check if the selected item is a file or a folder
+        if QFileInfo(self.model.filePath(index)).isDir():
+            menu = QMenu()
+            menu.addAction('Add File', lambda: self.add_file(index))
+            menu.addAction('Add Folder', lambda: self.add_folder(index))
+            menu.addAction('Delete', lambda: self.delete_file_or_folder(index))
+            menu.addAction('Rename', lambda: self.rename_file_or_folder(index))
+            menu.exec_(self.tree.viewport().mapToGlobal(pos))
+        else:
+            menu = QMenu()
+            menu.addAction('Delete', lambda: self.delete_file_or_folder(index))
+            menu.addAction('Rename', lambda: self.rename_file_or_folder(index))
+            menu.exec_(self.tree.viewport().mapToGlobal(pos))
+    
+    def add_file(self, index):
+        file_name, ok_pressed = QInputDialog.getText(self, "Create File", "File name:", QLineEdit.Normal, "")
+        if ok_pressed and file_name != '':
+            dir_path = self.model.filePath(index)
+            file_path = os.path.join(dir_path, file_name)
+            if os.path.exists(file_path):
+                QMessageBox.warning(self, 'Warning', 'Name already exists!', QMessageBox.Ok)
+            else:
+                with open(file_path, 'w') as f:
+                    pass
+
+    def add_folder(self, index):
+        folder_name, ok_pressed = QInputDialog.getText(self, "Create Folder", "Folder name:", QLineEdit.Normal, "")
+        if ok_pressed and folder_name != '':
+            dir_path = self.model.filePath(index)
+            folder_path = os.path.join(dir_path, folder_name)
+            try:
+                os.mkdir(folder_path)
+            except OSError:
+                QMessageBox.warning(self, 'Warning', 'Name already exists!', QMessageBox.Ok)
+
+    def delete_file_or_folder(self, index):
+        reply = QMessageBox.question(self, 'Delete', 'Are you sure to delete the selected file/folder?', QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.model.remove(index)
+
+    def rename_file_or_folder(self, index):
+        file_path = self.model.filePath(index)
+        is_folder = QFileInfo(file_path).isDir()
+        fn = os.path.basename(file_path)
+        fp = os.path.dirname(file_path)
+        new_file_name, ok_pressed = QInputDialog.getText(self, "Rename", "New name:", QLineEdit.Normal, QDir.toNativeSeparators(fn))
+        if ok_pressed and new_file_path:
+            new_file_path = os.path.join(fp, new_file_name)
+            new_file_path = QDir.toNativeSeparators(new_file_path)
+            new_file_path = os.path.join(os.path.dirname(file_path), new_file_path)
+            try:
+                if is_folder:
+                    os.rename(file_path, new_file_path)
+                else:
+                    shutil.move(file_path, new_file_path)
+            except OSError as e:
+                QMessageBox.warning(self, "Error", f"Failed to rename: {e}")
 
     def show_terminal(self): # TODO
         self.process.start("terminal")

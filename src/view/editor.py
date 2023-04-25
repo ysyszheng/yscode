@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QPlainTextEdit, QTextEdit
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtGui import QColor, QTextFormat, QPainter
-from view.bar import LineNumberBar, ToolBar
+from view.bar import LineNumberBar
 from utils.utils import log, welcome_text
 
 
@@ -9,6 +9,7 @@ class Editor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.dispaly_welcome = False
+        self.path = None
         self.initUI()
         
         self.lineNumberBar = LineNumberBar(self)
@@ -21,6 +22,7 @@ class Editor(QPlainTextEdit):
     def initUI(self):
         self.setStyleSheet("background-color: rgb(41, 44, 51);\
             color: rgb(171, 177, 189);")
+        self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
 
     def welcome(self):
         self.setPlainText(welcome_text)
