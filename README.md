@@ -1,6 +1,6 @@
 YSCODE
 =====
-A Smiple Code Editor
+A tiny Code Editor
 
 ![YSCODE](./assets/img/demo.png)
 
@@ -18,8 +18,9 @@ TODO
 - [x] File open/save/edit
 - [x] Toolbar
 - [x] Find and Replace
-- [x] Syntax Highlighting
+- [ ] Syntax Highlighting
 - [ ] Add Terminal
+- [x] File Tree
 
 References
 -----

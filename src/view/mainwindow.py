@@ -1,20 +1,28 @@
 import os
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox, QLineEdit
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox, QLineEdit, QFileSystemModel, QTreeView, QSplitter
 from PyQt5.QtGui import QFont, QIcon, QTextDocument, QTextCursor
+from PyQt5.QtCore import QProcess, Qt, QFileInfo
 from view.editor import Editor
 from view.bar import ToolBar
-from utils.utils import log
+from utils.utils import log, is_binary
 from syntax.py import Highlighter as PythonHighlighter
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.splitter = QSplitter()
         self.editor = Editor()
         self.hightlighter = PythonHighlighter(self.editor.document())
+        self.dir = None
         self.path = None
         self.find_bar = QLineEdit(self)
         self.replace_bar = QLineEdit(self)
+        self.jump_bar = QLineEdit(self)
+        self.process = QProcess(self)
+        self.model = QFileSystemModel()
+        self.model.setRootPath('') # TODO
+        self.tree = QTreeView()
         self.fnd = False
 
         self.initUI()
@@ -24,12 +32,17 @@ class MainWindow(QMainWindow):
         self.editor.cursorPositionChanged.connect(self.update_status_bar)
         self.editor.cursorPositionChanged.connect(self.reset_fnd)
         self.find_bar.returnPressed.connect(self.fnd_next)
+        self.jump_bar.returnPressed.connect(self.jump)
         self.replace_bar.returnPressed.connect(self.rpl)
+        self.tree.doubleClicked.connect(self.open_file_from_tree)
 
     def initUI(self):
         self.setGeometry(100, 100, 600, 400)
         self.setWindowIcon(QIcon('./assets/icons/logo.png'))
-        self.setCentralWidget(self.editor)
+        
+        self.setCentralWidget(self.splitter)
+        self.splitter.setStyleSheet("background-color: rgb(63, 68, 81);")
+
         self.statusBar().setStyleSheet("background-color: rgb(31, 34, 39);\
                                        color: rgb(143, 149, 162);")
         self.set_font()
@@ -38,8 +51,27 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
         self.find_bar.setPlaceholderText("Enter to find")
         self.replace_bar.setPlaceholderText("Enter to replace")
+        self.jump_bar.setPlaceholderText("Enter line number")
         self.find_bar.setFixedWidth(150)
         self.replace_bar.setFixedWidth(150)
+        self.jump_bar.setFixedWidth(150)
+
+        self.tree.setModel(self.model)
+        self.tree.setAnimated(False)
+        self.tree.setIndentation(20)
+        self.tree.setSortingEnabled(True)
+        self.tree.setWindowTitle("File Explorer")
+        self.tree.setStyleSheet("background-color: rgb(34, 37, 42);\
+            color: rgb(154, 159, 170);\
+            QTreeView::branch:selected {background-color: rgb(255, 0, 0);}")
+        self.tree.setHeaderHidden(True)
+        self.tree.setColumnHidden(1, True)
+        self.tree.setColumnHidden(2, True)
+        self.tree.setColumnHidden(3, True)
+
+        self.splitter.addWidget(self.tree)
+        self.splitter.addWidget(self.editor)
+        self.splitter.setSizes([self.width() * 0.2, self.width() * 0.8])
 
     def set_menu(self):
         menu = self.menuBar()
@@ -62,6 +94,10 @@ class MainWindow(QMainWindow):
         save_as_action.setShortcut("Ctrl+Shift+S")
         file_menu.addAction(save_as_action)
 
+        close_action = QAction("Close", self)
+        close_action.setShortcut("Ctrl+W")
+        file_menu.addAction(close_action)
+
         quit_action = QAction("Quit", self)
         quit_action.setShortcut("Ctrl+Q")
         file_menu.addAction(quit_action)
@@ -69,6 +105,7 @@ class MainWindow(QMainWindow):
         open_action.triggered.connect(self.open_file)
         save_action.triggered.connect(self.save_file)
         save_as_action.triggered.connect(self.save_as)
+        close_action.triggered.connect(self.close_file)
         quit_action.triggered.connect(self.quit_app)
 
         # Edit Menu
@@ -130,13 +167,43 @@ class MainWindow(QMainWindow):
     def open_file(self):
         file_path, _ = QFileDialog.getOpenFileName(self, 'Open File')
         if file_path:
+            try:
+                with open(file_path, 'r') as file:
+                    self.editor.setPlainText(file.read())
+                self.path = file_path
+                self.dir = None
+                self.update_title()
+            except UnicodeDecodeError:
+                QMessageBox.warning(self, "Warning", "Cannot open non-UTF-8 text files")
+        if self.editor.dispaly_welcome:
+            self.editor.dispaly_welcome = False
+            self.editor.setReadOnly(False)
+
+    def open_folder(self):
+        dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
+        if dir_path:
+            self.model.setRootPath(dir_path)
+            self.tree.setRootIndex(self.model.index(dir_path))
+            self.tree.sortByColumn(0, Qt.AscendingOrder)
+            self.dir = dir_path
+            self.path = None
+            self.update_title()
+            self.tree.show()
+        if self.editor.dispaly_welcome:    
+            self.editor.dispaly_welcome = False
+            self.editor.setReadOnly(False)
+
+    def open_file_from_tree(self, index):
+        file_path = self.model.filePath(index)
+        if QFileInfo(file_path).isDir():
+            return
+        try:
             with open(file_path, 'r') as file:
                 self.editor.setPlainText(file.read())
             self.path = file_path
             self.update_title()
-        if self.editor.dispaly_welcome:    
-            self.editor.dispaly_welcome = False
-            self.editor.setReadOnly(False)
+        except UnicodeDecodeError:
+            QMessageBox.warning(self, "Warning", "Cannot open non-UTF-8 text files")
 
     def save_file(self):
         if self.path is None:
@@ -172,7 +239,8 @@ class MainWindow(QMainWindow):
 
     def update_title(self):
         self.setWindowTitle(
-            "%s - YSCODE" % (os.path.basename(self.path) if self.path else "Untitled"))
+            "%s - %s" % (os.path.basename(self.path) if self.path else "Untitled",
+             os.path.basename(self.dir) if self.dir else "YSCODE"))
 
     def update_status_bar(self):
         self.statusBar().showMessage("Ln %d, Col %d" % (self.editor.textCursor(
@@ -208,29 +276,6 @@ class MainWindow(QMainWindow):
             else:
                 self.fnd = True
         return self.fnd
-        
-    def fnd_all(self):
-        if self.find_bar.text() != "":
-            # get current cursor position
-            current_cursor_pos = self.editor.textCursor().position()
-            # create a new QTextCursor to search from the beginning
-            search_cursor = QTextCursor(self.editor.document())
-            found_cursor = QTextCursor(self.editor.document())
-            search_cursor.movePosition(QTextCursor.Start)
-            # loop until no more matches are found
-            while search_cursor.hasSelection() or not search_cursor.atEnd():
-                search_cursor = self.editor.document().find(self.find_bar.text(), search_cursor, QTextDocument.FindCaseSensitively)
-                # highlight matching text
-                if search_cursor.hasSelection():
-                    found_cursor.setPosition(search_cursor.selectionStart())
-                    found_cursor.setPosition(search_cursor.selectionEnd(), QTextCursor.KeepAnchor)
-                    self.editor.setTextCursor(found_cursor)
-                else:
-                    break
-            # reset cursor to its original position
-            new_cursor = self.editor.textCursor()
-            new_cursor.setPosition(current_cursor_pos)
-            self.editor.setTextCursor(new_cursor)
 
     def rpl(self):
         if self.find_bar.text() != "" and self.fnd:
@@ -241,3 +286,13 @@ class MainWindow(QMainWindow):
         if self.find_bar.text() != "":
             while self.fnd_next():
                 self.editor.textCursor().insertText(self.replace_bar.text())
+
+    def jump(self):
+        if self.jump_bar.text() != "" and self.jump_bar.text().isdigit():
+            self.editor.moveCursor(QTextCursor.Start)
+            for _ in range(int(self.jump_bar.text()) - 1):
+                self.editor.moveCursor(QTextCursor.Down)
+            self.editor.moveCursor(QTextCursor.StartOfLine)
+
+    def show_terminal(self): # TODO
+        self.process.start("terminal")

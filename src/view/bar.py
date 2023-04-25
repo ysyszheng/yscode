@@ -25,10 +25,15 @@ class ToolBar(QToolBar):
         button_new.triggered.connect(wd.editor.keyPressEvent)
         self.addAction(button_new)
 
-        button_open = QAction(QIcon("./assets/icon/open"), "Open File", self)
-        button_open.setStatusTip("Open File")
-        button_open.triggered.connect(wd.open_file)
-        self.addAction(button_open)
+        button_open_file = QAction(QIcon("./assets/icon/open_file"), "Open File", self)
+        button_open_file.setStatusTip("Open File")
+        button_open_file.triggered.connect(wd.open_file)
+        self.addAction(button_open_file)
+
+        button_open_folder = QAction(QIcon("./assets/icon/open_folder"), "Open Folder", self)
+        button_open_folder.setStatusTip("Open Folder")
+        button_open_folder.triggered.connect(wd.open_folder)
+        self.addAction(button_open_folder)
 
         button_save = QAction(QIcon("./assets/icon/save"), "Save File", self)
         button_save.setStatusTip(f"Save File")
@@ -101,11 +106,17 @@ class ToolBar(QToolBar):
         self.addAction(button_before)
         self.addAction(button_next)
         self.addWidget(wd.replace_bar)
-        self.addAction(button_replace)
+        # self.addAction(button_replace)
         self.addAction(button_replace_all)
+        self.addWidget(wd.jump_bar)
 
         # miscellaneous
         self.addSeparator()
+
+        button_terminal = QAction(QIcon("./assets/icon/terminal"), "Terminal", self)
+        button_terminal.setStatusTip("Open Terminal")
+        button_terminal.triggered.connect(wd.show_terminal)
+        self.addAction(button_terminal)
 
         button_info = QAction(QIcon("./assets/icon/info"), "Info", self)
         button_info .setStatusTip("Info")

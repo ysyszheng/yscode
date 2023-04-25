@@ -3,7 +3,6 @@ Modified from the original code by Axel Erfurt
 Fixed some bugs and added some features
 '''
 
-import sys
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
 def format(color, style=''):
