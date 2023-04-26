@@ -1,7 +1,7 @@
 import os
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit
 from PyQt5.QtGui import QFont, QTextCursor
-import subprocess
+from PyQt5.QtCore import QProcess
 
 
 class Terminal(QWidget):
@@ -49,28 +49,23 @@ class Terminal(QWidget):
         if command == "clear":
             self.output_text.clear()
             return
-        self.output_text.append(f'${os.path.basename(self.current_directory)}> {command}')
-
-        try:
-            if command.startswith("cd "):
-                try:
-                    path = command[3:]
-                    os.chdir(path)
-                    self.current_directory = os.getcwd()
-                    self.output_text.append(f'Changed directory to {self.current_directory}\n')
-                except FileNotFoundError:
-                    self.output_text.append(f'No such file or directory: {path}\n')
-            else:
-                result = subprocess.run(
-                    command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True, cwd=self.current_directory)
-                output = result.stdout + result.stderr
-                self.output_text.append(output)
-        except subprocess.CalledProcessError as e:
-            output = e.stderr
-            self.output_text.append(output)
+        self.output_text.append(f'$ {os.path.basename(self.current_directory)}> {command}\n')
         
-        self.output_text.moveCursor(QTextCursor.End)
+        process = QProcess(self)
+        process.setProgram('/bin/bash')
+        process.setArguments(['-c', command])
+        process.setWorkingDirectory(self.current_directory)
+        process.readyReadStandardOutput.connect(lambda: self.handle_output(process))
+        process.readyReadStandardError.connect(lambda: self.handle_output(process))
+        process.finished.connect(lambda: process.deleteLater())
+        process.start()
 
+    def handle_output(self, process):
+        data = process.readAllStandardOutput()
+        data += process.readAllStandardError()
+        output = str(data, encoding='utf-8')
+        self.output_text.insertPlainText(output)
+        self.output_text.moveCursor(QTextCursor.End)
 
 if __name__ == "__main__":
     app = QApplication([])
