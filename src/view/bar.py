@@ -120,7 +120,7 @@ class ToolBar(QToolBar):
 
         button_terminal = QAction(QIcon("./assets/icon/terminal"), "Terminal", self)
         button_terminal.setStatusTip("Open Terminal")
-        button_terminal.triggered.connect(wd.show_terminal)
+        button_terminal.triggered.connect(wd.toggle_terminal)
         self.addAction(button_terminal)
 
         button_info = QAction(QIcon("./assets/icon/info"), "Info", self)

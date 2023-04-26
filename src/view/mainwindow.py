@@ -5,6 +5,7 @@ from PyQt5.QtCore import QProcess, Qt, QFileInfo, QDir
 import shutil
 from view.editor import Editor
 from view.bar import ToolBar
+from view.terminal import Terminal
 from utils.utils import log
 from syntax.py import Highlighter as PythonHighlighter
 
@@ -14,12 +15,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.splitter = QSplitter()
         self.editor = Editor()
+        self.terminal = Terminal()
         self.hightlighter = PythonHighlighter(self.editor.document())
         self.dir = None
         self.find_bar = QLineEdit(self)
         self.replace_bar = QLineEdit(self)
         self.jump_bar = QLineEdit(self)
-        self.process = QProcess(self) # TODO
         self.model = QFileSystemModel()
         self.model.setRootPath('')
         self.tree = QTreeView()
@@ -37,9 +38,6 @@ class MainWindow(QMainWindow):
         self.tree.doubleClicked.connect(self.open_file_from_tree)
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.show_tree_menu)
-        # self.process.readyReadStandardOutput.connect(self.read_output)
-        # self.process.readyReadStandardError.connect(self.read_error)
-        # self.process.finished.connect(self.process_finished)
 
     def initUI(self):
         # self.setGeometry(100, 100, 600, 400)
@@ -74,10 +72,19 @@ class MainWindow(QMainWindow):
         self.tree.setColumnHidden(2, True)
         self.tree.setColumnHidden(3, True)
 
-        self.splitter.addWidget(self.tree)
-        self.splitter.addWidget(self.editor)
+        splitter1 = QSplitter()
+        splitter1.addWidget(self.tree)
+        splitter2 = QSplitter()
+        splitter2.addWidget(self.editor)
+        splitter2.addWidget(self.terminal)
+        splitter2.setOrientation(Qt.Vertical)
+        splitter2.setSizes([self.height() * (2/3), self.height() * (1/3)])
+
+        self.splitter.addWidget(splitter1)
+        self.splitter.addWidget(splitter2)
         self.splitter.setSizes([self.width() * 0.2, self.width() * 0.8])
         self.tree.hide()
+        self.terminal.hide()
 
     def set_menu(self):
         menu = self.menuBar()
@@ -146,6 +153,11 @@ class MainWindow(QMainWindow):
         toggle_sidebar_action.setShortcut("Ctrl+B")
         view_menu.addAction(toggle_sidebar_action)
         toggle_sidebar_action.triggered.connect(self.toggle_sidebar)
+
+        toggle_terminal_action = QAction("Toggle Terminal", self)
+        toggle_terminal_action.setShortcut("Ctrl+T")
+        view_menu.addAction(toggle_terminal_action)
+        toggle_terminal_action.triggered.connect(self.toggle_terminal)
 
         zoom_in_action = QAction("Zoom In", self)
         zoom_in_action.setShortcut("Ctrl++")
@@ -419,5 +431,8 @@ class MainWindow(QMainWindow):
         else:
             self.tree.show()
 
-    def show_terminal(self): # TODO
-        self.process.start("terminal")
+    def toggle_terminal(self):
+        if self.terminal.isVisible():
+            self.terminal.hide()
+        else:
+            self.terminal.show()

@@ -29,7 +29,7 @@ TODO
 - [x] Toolbar
 - [x] Find and Replace
 - [ ] Syntax Highlighting
-- [ ] Add Terminal
+- [x] Add Terminal
 - [x] File Tree
 - [x] Right Click Menu
 - [x] Auto Indentation
