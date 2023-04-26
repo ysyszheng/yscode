@@ -42,7 +42,7 @@ class MainWindow(QMainWindow):
     def initUI(self):
         # self.setGeometry(100, 100, 600, 400)
         self.setWindowIcon(QIcon('./assets/icons/logo.png'))
-        
+
         self.setCentralWidget(self.splitter)
         self.splitter.setStyleSheet("background-color: rgb(63, 68, 81);")
 
@@ -63,7 +63,6 @@ class MainWindow(QMainWindow):
         self.tree.setAnimated(False)
         self.tree.setIndentation(20)
         self.tree.setSortingEnabled(True)
-        self.tree.setWindowTitle("File Explorer")
         self.tree.setStyleSheet("background-color: rgb(34, 37, 42);\
             color: rgb(154, 159, 170);\
             QTreeView::branch:selected {background-color: rgb(255, 0, 0);}")
@@ -191,7 +190,7 @@ class MainWindow(QMainWindow):
         font.setStyleHint(QFont.Monospace)
         font.setFixedPitch(True)
         self.editor.setFont(font)
-        
+
     def open_file(self):
         if self.editor.document().isModified():
             reply = QMessageBox.question(self, "Save?", "Do you want to save before closing?",
@@ -205,30 +204,30 @@ class MainWindow(QMainWindow):
             self.open_file_helper()
 
     def open_folder(self):
-            dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
-            if dir_path:
-                self.model.setRootPath(dir_path)
-                self.tree.setRootIndex(self.model.index(dir_path))
-                self.tree.sortByColumn(0, Qt.AscendingOrder)
-                self.dir = dir_path
-                self.update_title()
-                self.tree.show()
-            if self.editor.display_welcome:    
-                self.editor.display_welcome = False
-                self.editor.setReadOnly(False)
+        dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
+        if dir_path:
+            self.model.setRootPath(dir_path)
+            self.tree.setRootIndex(self.model.index(dir_path))
+            self.tree.sortByColumn(0, Qt.AscendingOrder)
+            self.dir = dir_path
+            self.update_title()
+            self.tree.show()
+        if self.editor.display_welcome:
+            self.editor.display_welcome = False
+            self.editor.setReadOnly(False)
 
     def open_folder(self):
-            dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
-            if dir_path:
-                self.model.setRootPath(os.path.dirname(dir_path))
-                self.tree.setRootIndex(self.model.index(dir_path))
-                self.tree.sortByColumn(0, Qt.AscendingOrder)
-                self.dir = dir_path
-                self.update_title()
-                self.tree.show()
-            if self.editor.display_welcome:    
-                self.editor.display_welcome = False
-                self.editor.setReadOnly(False)
+        dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
+        if dir_path:
+            self.model.setRootPath(os.path.dirname(dir_path))
+            self.tree.setRootIndex(self.model.index(dir_path))
+            self.tree.sortByColumn(0, Qt.AscendingOrder)
+            self.dir = dir_path
+            self.update_title()
+            self.tree.show()
+        if self.editor.display_welcome:
+            self.editor.display_welcome = False
+            self.editor.setReadOnly(False)
 
     def open_file_from_tree(self, index):
         file_path = self.model.filePath(index)
@@ -241,7 +240,8 @@ class MainWindow(QMainWindow):
             self.editor.path = file_path
             self.update_title()
         except UnicodeDecodeError:
-            QMessageBox.warning(self, "Warning", "Cannot open non-UTF-8 text files")
+            QMessageBox.warning(
+                self, "Warning", "Cannot open non-UTF-8 text files")
 
     def save_file(self):
         if self.editor.path is None:
@@ -269,7 +269,7 @@ class MainWindow(QMainWindow):
                 self.close_file_helper()
         else:
             self.close_file_helper()
-    
+
     def close_file_helper(self):
         self.editor.path = None
         self.editor.setPlainText("")
@@ -297,7 +297,7 @@ class MainWindow(QMainWindow):
     def update_title(self):
         self.setWindowTitle(
             "%s - %s" % (os.path.basename(self.editor.path) if self.editor.path else "Untitled",
-             os.path.basename(self.dir) if self.dir else "YSCODE"))
+                         os.path.basename(self.dir) if self.dir else "YSCODE"))
 
     def update_status_bar(self):
         self.statusBar().showMessage("Ln %d, Col %d" % (self.editor.textCursor(
@@ -369,27 +369,31 @@ class MainWindow(QMainWindow):
             menu.addAction('Delete', lambda: self.delete_file_or_folder(index))
             menu.addAction('Rename', lambda: self.rename_file_or_folder(index))
             menu.exec_(self.tree.viewport().mapToGlobal(pos))
-    
+
     def add_file(self, index):
-        file_name, ok_pressed = QInputDialog.getText(self, "Create File", "File name:", QLineEdit.Normal, "")
+        file_name, ok_pressed = QInputDialog.getText(
+            self, "Create File", "File name:", QLineEdit.Normal, "")
         if ok_pressed and file_name != '':
             dir_path = self.model.filePath(index)
             file_path = os.path.join(dir_path, file_name)
             if os.path.exists(file_path):
-                QMessageBox.warning(self, 'Warning', 'Name already exists!', QMessageBox.Ok)
+                QMessageBox.warning(
+                    self, 'Warning', 'Name already exists!', QMessageBox.Ok)
             else:
                 with open(file_path, 'w') as f:
                     pass
 
     def add_folder(self, index):
-        folder_name, ok_pressed = QInputDialog.getText(self, "Create Folder", "Folder name:", QLineEdit.Normal, "")
+        folder_name, ok_pressed = QInputDialog.getText(
+            self, "Create Folder", "Folder name:", QLineEdit.Normal, "")
         if ok_pressed and folder_name != '':
             dir_path = self.model.filePath(index)
             folder_path = os.path.join(dir_path, folder_name)
             try:
                 os.mkdir(folder_path)
             except OSError:
-                QMessageBox.warning(self, 'Warning', 'Name already exists!', QMessageBox.Ok)
+                QMessageBox.warning(
+                    self, 'Warning', 'Name already exists!', QMessageBox.Ok)
 
     def move_file_or_folder(self, index):
         dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
@@ -398,12 +402,14 @@ class MainWindow(QMainWindow):
             file_name = os.path.basename(file_path)
             new_file_path = os.path.join(dir_path, file_name)
             if os.path.exists(new_file_path):
-                QMessageBox.warning(self, 'Warning', 'Name already exists!', QMessageBox.Ok)
+                QMessageBox.warning(
+                    self, 'Warning', 'Name already exists!', QMessageBox.Ok)
             else:
                 shutil.move(file_path, new_file_path)
 
     def delete_file_or_folder(self, index):
-        reply = QMessageBox.question(self, 'Delete', 'Are you sure to delete the selected file/folder?', QMessageBox.Yes | QMessageBox.No)
+        reply = QMessageBox.question(
+            self, 'Delete', 'Are you sure to delete the selected file/folder?', QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.model.remove(index)
 
@@ -412,11 +418,13 @@ class MainWindow(QMainWindow):
         is_folder = QFileInfo(file_path).isDir()
         fn = os.path.basename(file_path)
         fp = os.path.dirname(file_path)
-        new_file_name, ok_pressed = QInputDialog.getText(self, "Rename", "New name:", QLineEdit.Normal, QDir.toNativeSeparators(fn))
+        new_file_name, ok_pressed = QInputDialog.getText(
+            self, "Rename", "New name:", QLineEdit.Normal, QDir.toNativeSeparators(fn))
         if ok_pressed and new_file_path:
             new_file_path = os.path.join(fp, new_file_name)
             new_file_path = QDir.toNativeSeparators(new_file_path)
-            new_file_path = os.path.join(os.path.dirname(file_path), new_file_path)
+            new_file_path = os.path.join(
+                os.path.dirname(file_path), new_file_path)
             try:
                 if is_folder:
                     os.rename(file_path, new_file_path)

@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLi
 from PyQt5.QtGui import QFont
 import subprocess
 
+
 class Terminal(QWidget):
     def __init__(self):
         super().__init__()
@@ -20,7 +21,7 @@ class Terminal(QWidget):
 
         self.setLayout(main_layout)
         self.initUI()
-        
+
         self.command_input.returnPressed.connect(self.run_command)
 
     def initUI(self):
@@ -35,20 +36,26 @@ class Terminal(QWidget):
             border: 1px solid rgb(34, 37, 42);")
         self.output_text.setStyleSheet("background-color: rgb(29, 31, 35);\
             color: rgb(171, 177, 189);")
-        self.command_input.setPlaceholderText("Enter command here...")
+        self.command_input.setPlaceholderText(
+            "Enter command here... (Press Enter to run)")
         self.output_text.setReadOnly(True)
 
     def run_command(self):
         command = self.command_input.text()
-        self.output_text.setText("Working...")
+        if command == "clear":
+            self.output_text.clear()
+            return
+        self.output_text.append(f'$> {command}')
 
         try:
-            result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
+            result = subprocess.run(
+                command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
             output = result.stdout + result.stderr
         except subprocess.CalledProcessError as e:
             output = e.stderr
 
-        self.output_text.setText(output)
+        self.output_text.append(output)
+
 
 if __name__ == "__main__":
     app = QApplication([])

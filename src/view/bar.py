@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QToolBar, QAction
-from PyQt5.QtGui import QIcon, QFont
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize
+
 
 class LineNumberBar(QWidget):
     def __init__(self, editor):
@@ -13,24 +14,27 @@ class LineNumberBar(QWidget):
     def paintEvent(self, event):
         self.editor.lineNumberBarPaintEvent(event)
 
+
 class ToolBar(QToolBar):
     def __init__(self, wd, parent=None):
         super().__init__(parent)
         self.wd = wd
         self.setIconSize(QSize(16, 16))
-        
+
         # file
         button_new = QAction(QIcon("./assets/icon/new"), "New File", self)
         button_new.setStatusTip("New File")
         button_new.triggered.connect(wd.editor.keyPressEvent)
         self.addAction(button_new)
 
-        button_open_file = QAction(QIcon("./assets/icon/open_file"), "Open File", self)
+        button_open_file = QAction(
+            QIcon("./assets/icon/open_file"), "Open File", self)
         button_open_file.setStatusTip("Open File")
         button_open_file.triggered.connect(wd.open_file)
         self.addAction(button_open_file)
 
-        button_open_folder = QAction(QIcon("./assets/icon/open_folder"), "Open Folder", self)
+        button_open_folder = QAction(
+            QIcon("./assets/icon/open_folder"), "Open Folder", self)
         button_open_folder.setStatusTip("Open Folder")
         button_open_folder.triggered.connect(wd.open_folder)
         self.addAction(button_open_folder)
@@ -40,17 +44,20 @@ class ToolBar(QToolBar):
         button_save.triggered.connect(wd.save_file)
         self.addAction(button_save)
 
-        button_save_as = QAction(QIcon("./assets/icon/save_as"), "Save File As", self)
+        button_save_as = QAction(
+            QIcon("./assets/icon/save_as"), "Save File As", self)
         button_save_as.setStatusTip("Save File As")
         button_save_as.triggered.connect(wd.save_as)
         self.addAction(button_save_as)
 
-        button_close_file = QAction(QIcon("./assets/icon/close_file"), "Close File", self)
+        button_close_file = QAction(
+            QIcon("./assets/icon/close_file"), "Close File", self)
         button_close_file.setStatusTip("Close File")
         button_close_file.triggered.connect(wd.close_file)
         self.addAction(button_close_file)
 
-        button_close_folder = QAction(QIcon("./assets/icon/close_folder"), "Close Folder", self)
+        button_close_folder = QAction(
+            QIcon("./assets/icon/close_folder"), "Close Folder", self)
         button_close_folder.setStatusTip("Close Folder")
         button_close_folder.triggered.connect(wd.close_folder)
         self.addAction(button_close_folder)
@@ -98,11 +105,13 @@ class ToolBar(QToolBar):
         button_next.setStatusTip("Find Next")
         button_next.triggered.connect(wd.fnd_next)
 
-        button_replace = QAction(QIcon("./assets/icon/replace"),"Replace", self)
+        button_replace = QAction(
+            QIcon("./assets/icon/replace"), "Replace", self)
         button_replace.setStatusTip("Replace")
         button_replace.triggered.connect(wd.rpl)
 
-        button_replace_all = QAction(QIcon("./assets/icon/replace_all"), "Replace All", self)
+        button_replace_all = QAction(
+            QIcon("./assets/icon/replace_all"), "Replace All", self)
         button_replace_all.setStatusTip("Replace All")
         button_replace_all.triggered.connect(wd.rpl_all)
 
@@ -118,7 +127,8 @@ class ToolBar(QToolBar):
         # miscellaneous
         self.addSeparator()
 
-        button_terminal = QAction(QIcon("./assets/icon/terminal"), "Terminal", self)
+        button_terminal = QAction(
+            QIcon("./assets/icon/terminal"), "Terminal", self)
         button_terminal.setStatusTip("Open Terminal")
         button_terminal.triggered.connect(wd.toggle_terminal)
         self.addAction(button_terminal)
