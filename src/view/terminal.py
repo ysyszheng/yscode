@@ -50,10 +50,37 @@ class Terminal(QWidget):
             self.output_text.clear()
             return
         self.output_text.append(f'$ {os.path.basename(self.current_directory)}> {command}\n')
-        
+
+        if command.startswith('cd'):
+            self.handle_cd(command)
+        else:
+            self.handle_command(command)
+
+
+    def handle_cd(self, command):
+        try:
+            os.chdir(command[3:])
+            self.current_directory = os.getcwd()
+        except FileNotFoundError:
+            self.output_text.append(f'No such file or directory: {command[3:]}\n')
+        except NotADirectoryError:
+            self.output_text.append(f'Not a directory: {command[3:]}\n')
+        except PermissionError:
+            self.output_text.append(f'Permission denied: {command[3:]}\n')
+        except:
+            self.output_text.append(f'Error: {command[3:]}\n')
+        finally:
+            self.output_text.append(f'Current directory: {self.current_directory}\n')
+        self.output_text.moveCursor(QTextCursor.End)
+
+    def handle_command(self, command):
         process = QProcess(self)
-        process.setProgram('/bin/bash')
-        process.setArguments(['-c', command])
+        if os.name == 'nt':
+            process.setProgram('cmd')
+            process.setArguments(['/c', command])
+        else:
+            process.setProgram('/bin/bash')
+            process.setArguments(['-c', command])
         process.setWorkingDirectory(self.current_directory)
         process.readyReadStandardOutput.connect(lambda: self.handle_output(process))
         process.readyReadStandardError.connect(lambda: self.handle_output(process))
