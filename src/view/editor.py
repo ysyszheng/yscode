@@ -8,7 +8,7 @@ from utils.utils import log, welcome_text
 class Editor(QPlainTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.dispaly_welcome = False
+        self.display_welcome = False
         self.path = None
         self.blockFormat = QTextBlockFormat()
         self.initUI()
@@ -27,7 +27,7 @@ class Editor(QPlainTextEdit):
 
     def welcome(self):
         self.setPlainText(welcome_text)
-        self.dispaly_welcome = True
+        self.display_welcome = True
         self.setReadOnly(True)
 
     def lineNumberBarWidth(self):
@@ -103,9 +103,9 @@ class Editor(QPlainTextEdit):
         cursor.endEditBlock()
 
     def keyPressEvent(self, event):
-        if self.dispaly_welcome:
+        if self.display_welcome:
             self.setPlainText("")
-            self.dispaly_welcome = False
+            self.display_welcome = False
             self.setReadOnly(False)
             return
         if event.key() == Qt.Key_Tab:
