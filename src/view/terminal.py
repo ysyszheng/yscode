@@ -1,5 +1,6 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QTextEdit
-from PyQt5.QtGui import QFont
+import os
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QTextEdit
+from PyQt5.QtGui import QFont, QTextCursor
 import subprocess
 
 
@@ -8,6 +9,8 @@ class Terminal(QWidget):
         super().__init__()
         self.command_input = QLineEdit()
         self.output_text = QTextEdit()
+        self.output_text.setReadOnly(True)
+        self.current_directory = os.getcwd()
 
         input_layout = QHBoxLayout()
         input_layout.addWidget(self.command_input)
@@ -42,19 +45,31 @@ class Terminal(QWidget):
 
     def run_command(self):
         command = self.command_input.text()
+        self.command_input.clear()
         if command == "clear":
             self.output_text.clear()
             return
-        self.output_text.append(f'$> {command}')
+        self.output_text.append(f'${os.path.basename(self.current_directory)}> {command}')
 
         try:
-            result = subprocess.run(
-                command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
-            output = result.stdout + result.stderr
+            if command.startswith("cd "):
+                try:
+                    path = command[3:]
+                    os.chdir(path)
+                    self.current_directory = os.getcwd()
+                    self.output_text.append(f'Changed directory to {self.current_directory}\n')
+                except FileNotFoundError:
+                    self.output_text.append(f'No such file or directory: {path}\n')
+            else:
+                result = subprocess.run(
+                    command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True, cwd=self.current_directory)
+                output = result.stdout + result.stderr
+                self.output_text.append(output)
         except subprocess.CalledProcessError as e:
             output = e.stderr
-
-        self.output_text.append(output)
+            self.output_text.append(output)
+        
+        self.output_text.moveCursor(QTextCursor.End)
 
 
 if __name__ == "__main__":

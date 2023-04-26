@@ -1,7 +1,7 @@
 import os
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox, QLineEdit, QFileSystemModel, QTreeView, QSplitter, QMenu, QInputDialog
 from PyQt5.QtGui import QFont, QIcon, QTextDocument, QTextCursor
-from PyQt5.QtCore import QProcess, Qt, QFileInfo, QDir
+from PyQt5.QtCore import Qt, QFileInfo, QDir
 import shutil
 from view.editor import Editor
 from view.bar import ToolBar
