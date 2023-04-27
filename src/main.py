@@ -10,5 +10,6 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName("YSCODE")
     window = MainWindow()
-    window.showFullScreen()
+    window.show()
+    window.showMaximized()
     app.exec_()
