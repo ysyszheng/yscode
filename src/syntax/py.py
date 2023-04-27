@@ -28,17 +28,18 @@ def format(color, style=''):
 
 
 STYLES = {
-    'keyword': format('#bb7fd7'),
-    'operator': format('#6eb4c0'),
-    'brace': format('#c79a6d'),
-    'defclass': format('#72aee9'),
-    'classes': format('#dabc81'),
-    'string': format('#a1c181'),
-    'string2': format('#a1c181'),
-    'comment': format('#80838d', 'italic'),
-    'self': format('#dabc81', 'italic'),
-    'next': format('#70abe5'),
-    'numbers': format('#c0956a'),
+    'keyword': format('#BB7FD7'),
+    'operator': format('#6EB4C0'),
+    'brace': format('#C79A6D'),
+    'variable': format('#D17277'),
+    'functions': format('#72AEE9'),
+    'magicmethods': format('#6EB4BF'),
+    'classes': format('#DABC81'),
+    'string': format('#A1C181'),
+    'string2': format('#A1C181'),
+    'comment': format('#80838D', 'italic'),
+    'self': format('#DABC81', 'italic'),
+    'numbers': format('#C0956A'),
 }
 
 
@@ -107,18 +108,20 @@ class Highlighter(QSyntaxHighlighter):
             # Single-quoted string, possibly containing escape sequences
             (r"'[^'\\]*(\\.[^'\\]*)*'", 0, STYLES['string']),
 
-            # 'def' followed by an word
-            # (r'\bdef\b\s*(\w+)', 1, STYLES['defclass']),
-            (r'\bdef\b\s*(\w+)', 1, STYLES['defclass']),
+            # variable names
+            (r'\b(\w+)\b\s*(?=\=)', 1, STYLES['variable']),
 
-            # . followed by an word
-            (r'\b.\b\s*(\w+)', 1, STYLES['next']),
+            # function names, followed by an ()
+            (r'\b(\w+)\b\s*(\()', 1, STYLES['functions']),
 
-            # 'class' followed by an identifier
+            # class names
             (r'\bclass\b\s*(\w+)', 1, STYLES['classes']),
 
             # From '#' until a newline
             (r'#[^\n]*', 0, STYLES['comment']),
+
+            # Magic methods
+            (r'\b__(\w+)__\b', 0, STYLES['magicmethods']),
         ]
 
         # Build a QRegExp for each pattern
