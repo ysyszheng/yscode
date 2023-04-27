@@ -1,22 +1,43 @@
+'''
+All kinds of bars in the main window.
+'''
+
 from PyQt5.QtWidgets import QWidget, QToolBar, QAction
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize
 
 
 class LineNumberBar(QWidget):
+    '''
+    Line number bar class
+    '''
+
     def __init__(self, editor):
         super().__init__(editor)
         self.editor = editor
 
     def sizeHint(self):
+        '''
+        Return line number bar width
+        '''
         return QSize(self.editor.lineNumberBarWidth(), 0)
 
     def paintEvent(self, event):
+        '''
+        Paint line number bar
+        '''
         self.editor.lineNumberBarPaintEvent(event)
 
 
 class ToolBar(QToolBar):
+    '''
+    Tool bar class
+    '''
+
     def __init__(self, wd, parent=None):
+        '''
+        Icon, status tip and trigger of each button
+        '''
         super().__init__(parent)
         self.wd = wd
         self.setIconSize(QSize(16, 16))

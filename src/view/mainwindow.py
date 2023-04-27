@@ -1,3 +1,7 @@
+'''
+Main Window
+'''
+
 import os
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QAction, QMessageBox, QLineEdit, QFileSystemModel, QTreeView, QSplitter, QMenu, QInputDialog
 from PyQt5.QtGui import QFont, QIcon, QTextDocument, QTextCursor
@@ -11,6 +15,10 @@ from syntax.py import Highlighter as PythonHighlighter
 
 
 class MainWindow(QMainWindow):
+    '''
+    Main Window Class
+    '''
+
     def __init__(self):
         super().__init__()
         self.splitter = QSplitter()
@@ -40,6 +48,9 @@ class MainWindow(QMainWindow):
         self.tree.customContextMenuRequested.connect(self.show_tree_menu)
 
     def initUI(self):
+        '''
+        Initialize UI
+        '''
         self.setGeometry(100, 100, 600, 400)
         self.setWindowIcon(QIcon('./assets/icons/logo.png'))
 
@@ -77,15 +88,20 @@ class MainWindow(QMainWindow):
         splitter2.addWidget(self.editor)
         splitter2.addWidget(self.terminal)
         splitter2.setOrientation(Qt.Vertical)
-        splitter2.setSizes([int(self.height() * (2/3)), int(self.height() * (1/3))])
+        splitter2.setSizes([int(self.height() * (2/3)),
+                           int(self.height() * (1/3))])
 
         self.splitter.addWidget(splitter1)
         self.splitter.addWidget(splitter2)
-        self.splitter.setSizes([int(self.width() * 0.2), int(self.width() * 0.8)])
+        self.splitter.setSizes(
+            [int(self.width() * 0.2), int(self.width() * 0.8)])
         self.tree.hide()
         self.terminal.hide()
 
     def set_menu(self):
+        '''
+        Set Menu
+        '''
         menu = self.menuBar()
         file_menu = menu.addMenu("File")
         edit_menu = menu.addMenu("Edit")
@@ -191,12 +207,18 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(self.show_info)
 
     def set_font(self):
+        '''
+        Set Font
+        '''
         font = QFont("Consolas", 14)
         font.setStyleHint(QFont.Monospace)
         font.setFixedPitch(True)
         self.editor.setFont(font)
 
     def open_file(self):
+        '''
+        Open File
+        '''
         if self.editor.document().isModified():
             reply = QMessageBox.question(self, "Save?", "Do you want to save before closing?",
                                          QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
@@ -209,6 +231,9 @@ class MainWindow(QMainWindow):
             self.open_file_helper()
 
     def open_folder(self):
+        '''
+        Open Folder
+        '''
         dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
         if dir_path:
             self.model.setRootPath(dir_path)
@@ -221,20 +246,10 @@ class MainWindow(QMainWindow):
             self.editor.display_welcome = False
             self.editor.setReadOnly(False)
 
-    def open_folder(self):
-        dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
-        if dir_path:
-            self.model.setRootPath(os.path.dirname(dir_path))
-            self.tree.setRootIndex(self.model.index(dir_path))
-            self.tree.sortByColumn(0, Qt.AscendingOrder)
-            self.dir = dir_path
-            self.update_title()
-            self.tree.show()
-        if self.editor.display_welcome:
-            self.editor.display_welcome = False
-            self.editor.setReadOnly(False)
-
     def open_file_from_tree(self, index):
+        '''
+        Open File From File Tree
+        '''
         file_path = self.model.filePath(index)
         if QFileInfo(file_path).isDir():
             return
@@ -249,6 +264,9 @@ class MainWindow(QMainWindow):
                 self, "Warning", "Cannot open non-UTF-8 text files")
 
     def save_file(self):
+        '''
+        Save File
+        '''
         if self.editor.path is None:
             self.save_as()
         else:
@@ -256,6 +274,9 @@ class MainWindow(QMainWindow):
                 file.write(self.editor.toPlainText())
 
     def save_as(self):
+        '''
+        Save As
+        '''
         file_path, _ = QFileDialog.getSaveFileName(self, 'Save File')
         if file_path:
             with open(file_path, 'w') as file:
@@ -264,6 +285,9 @@ class MainWindow(QMainWindow):
             self.update_title()
 
     def close_file(self):
+        '''
+        Close File
+        '''
         if self.editor.document().isModified():
             reply = QMessageBox.question(self, "Save?", "Do you want to save before closing?",
                                          QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
@@ -276,11 +300,17 @@ class MainWindow(QMainWindow):
             self.close_file_helper()
 
     def close_file_helper(self):
+        '''
+        Remove File Path, Clear Editor, and Update Title
+        '''
         self.editor.path = None
         self.editor.setPlainText("")
         self.update_title()
 
     def close_folder(self):
+        '''
+        Close Folder
+        '''
         self.dir = None
         self.editor.path = None
         self.editor.setPlainText("")
@@ -288,6 +318,9 @@ class MainWindow(QMainWindow):
         self.update_title()
 
     def quit_app(self):
+        '''
+        Quit Application
+        '''
         if self.editor.document().isModified():
             reply = QMessageBox.question(self, "Save?", "Do you want to save before quitting?",
                                          QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
@@ -300,24 +333,39 @@ class MainWindow(QMainWindow):
             self.close()
 
     def update_title(self):
+        '''
+        Update Title
+        '''
         self.setWindowTitle(
             "%s - %s" % (os.path.basename(self.editor.path) if self.editor.path else "Untitled",
                          os.path.basename(self.dir) if self.dir else "YSCODE"))
 
     def update_status_bar(self):
+        '''
+        Update Status Bar
+        '''
         self.statusBar().showMessage("%s | Line %d, Column %d" % (
             self.editor.path if self.editor.path else "Untitled",
             self.editor.textCursor().blockNumber() + 1,
             self.editor.textCursor().columnNumber() + 1))
 
     def show_info(self):
+        '''
+        Show Info
+        '''
         QMessageBox.information(
             self, "About YSCODE", "YSCODE is a simple text editor.<br>Developed by Yusen Zheng.")
 
     def reset_fnd(self):
+        '''
+        Set Find mode to False
+        '''
         self.fnd = False
 
     def fnd_before(self):
+        '''
+        Find the previous text
+        '''
         if self.find_bar.text() != "":
             if not self.editor.find(self.find_bar.text(), QTextDocument.FindBackward):
                 self.editor.moveCursor(QTextCursor.End)
@@ -330,6 +378,9 @@ class MainWindow(QMainWindow):
         return self.fnd
 
     def fnd_next(self):
+        '''
+        Find the next text
+        '''
         if self.find_bar.text() != "":
             if not self.editor.find(self.find_bar.text()):
                 self.editor.moveCursor(QTextCursor.Start)
@@ -342,16 +393,25 @@ class MainWindow(QMainWindow):
         return self.fnd
 
     def rpl(self):
+        '''
+        Replace the text
+        '''
         if self.find_bar.text() != "" and self.fnd:
             self.editor.textCursor().insertText(self.replace_bar.text())
         self.fnd_next()
 
     def rpl_all(self):
+        '''
+        Replace all the text
+        '''
         if self.find_bar.text() != "":
             while self.fnd_next():
                 self.editor.textCursor().insertText(self.replace_bar.text())
 
     def jump(self):
+        '''
+        Jump to the line
+        '''
         if self.jump_bar.text() != "" and self.jump_bar.text().isdigit():
             self.editor.moveCursor(QTextCursor.Start)
             for _ in range(int(self.jump_bar.text()) - 1):
@@ -359,6 +419,9 @@ class MainWindow(QMainWindow):
             self.editor.moveCursor(QTextCursor.StartOfLine)
 
     def show_tree_menu(self, pos):
+        '''
+        Show Tree Menu
+        '''
         index = self.tree.indexAt(pos)
         if not index.isValid():
             return
@@ -378,6 +441,9 @@ class MainWindow(QMainWindow):
             menu.exec_(self.tree.viewport().mapToGlobal(pos))
 
     def add_file(self, index):
+        '''
+        Add File in Tree Menu
+        '''
         file_name, ok_pressed = QInputDialog.getText(
             self, "Create File", "File name:", QLineEdit.Normal, "")
         if ok_pressed and file_name != '':
@@ -391,6 +457,9 @@ class MainWindow(QMainWindow):
                     pass
 
     def add_folder(self, index):
+        '''
+        Add Folder in Tree Menu
+        '''
         folder_name, ok_pressed = QInputDialog.getText(
             self, "Create Folder", "Folder name:", QLineEdit.Normal, "")
         if ok_pressed and folder_name != '':
@@ -403,6 +472,9 @@ class MainWindow(QMainWindow):
                     self, 'Warning', 'Name already exists!', QMessageBox.Ok)
 
     def move_file_or_folder(self, index):
+        '''
+        Move File or Folder in Tree Menu
+        '''
         dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
         if dir_path:
             file_path = self.model.filePath(index)
@@ -415,12 +487,18 @@ class MainWindow(QMainWindow):
                 shutil.move(file_path, new_file_path)
 
     def delete_file_or_folder(self, index):
+        '''
+        Delete File or Folder in Tree Menu
+        '''
         reply = QMessageBox.question(
             self, 'Delete', 'Are you sure to delete the selected file/folder?', QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.model.remove(index)
 
     def rename_file_or_folder(self, index):
+        '''
+        Rename File or Folder in Tree Menu
+        '''
         file_path = self.model.filePath(index)
         is_folder = QFileInfo(file_path).isDir()
         fn = os.path.basename(file_path)
@@ -441,12 +519,18 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "Error", f"Failed to rename: {e}")
 
     def toggle_sidebar(self):
+        '''
+        Display or hide the sidebar
+        '''
         if self.tree.isVisible():
             self.tree.hide()
         else:
             self.tree.show()
 
     def toggle_terminal(self):
+        '''
+        Display or hide the terminal
+        '''
         if self.terminal.isVisible():
             self.terminal.hide()
         else:

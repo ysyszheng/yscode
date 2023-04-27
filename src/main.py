@@ -1,3 +1,7 @@
+'''
+Entry point of the application.
+'''
+
 import sys
 from view.mainwindow import MainWindow
 from PyQt5.QtWidgets import QApplication
