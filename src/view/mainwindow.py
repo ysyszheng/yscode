@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         self.tree.customContextMenuRequested.connect(self.show_tree_menu)
 
     def initUI(self):
-        # self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 600, 400)
         self.setWindowIcon(QIcon('./assets/icons/logo.png'))
 
         self.setCentralWidget(self.splitter)
@@ -77,11 +77,11 @@ class MainWindow(QMainWindow):
         splitter2.addWidget(self.editor)
         splitter2.addWidget(self.terminal)
         splitter2.setOrientation(Qt.Vertical)
-        splitter2.setSizes([self.height() * (2/3), self.height() * (1/3)])
+        splitter2.setSizes([int(self.height() * (2/3)), int(self.height() * (1/3))])
 
         self.splitter.addWidget(splitter1)
         self.splitter.addWidget(splitter2)
-        self.splitter.setSizes([self.width() * 0.2, self.width() * 0.8])
+        self.splitter.setSizes([int(self.width() * 0.2), int(self.width() * 0.8)])
         self.tree.hide()
         self.terminal.hide()
 
@@ -94,9 +94,13 @@ class MainWindow(QMainWindow):
         help_menu = menu.addMenu("Help")
 
         # File Menu
-        open_action = QAction("Open", self)
-        open_action.setShortcut("Ctrl+O")
-        file_menu.addAction(open_action)
+        open_file_action = QAction("Open File", self)
+        open_file_action.setShortcut("Ctrl+O")
+        file_menu.addAction(open_file_action)
+
+        open_folder_action = QAction("Open Folder", self)
+        open_folder_action.setShortcut("Ctrl+Shift+O")
+        file_menu.addAction(open_folder_action)
 
         save_action = QAction("Save", self)
         save_action.setShortcut("Ctrl+S")
@@ -114,7 +118,8 @@ class MainWindow(QMainWindow):
         quit_action.setShortcut("Ctrl+Q")
         file_menu.addAction(quit_action)
 
-        open_action.triggered.connect(self.open_file)
+        open_file_action.triggered.connect(self.open_file)
+        open_folder_action.triggered.connect(self.open_folder)
         save_action.triggered.connect(self.save_file)
         save_as_action.triggered.connect(self.save_as)
         close_action.triggered.connect(self.close_file)
@@ -300,8 +305,10 @@ class MainWindow(QMainWindow):
                          os.path.basename(self.dir) if self.dir else "YSCODE"))
 
     def update_status_bar(self):
-        self.statusBar().showMessage("Ln %d, Col %d" % (self.editor.textCursor(
-        ).blockNumber() + 1, self.editor.textCursor().columnNumber()))
+        self.statusBar().showMessage("%s | Line %d, Column %d" % (
+            self.editor.path if self.editor.path else "Untitled",
+            self.editor.textCursor().blockNumber() + 1,
+            self.editor.textCursor().columnNumber() + 1))
 
     def show_info(self):
         QMessageBox.information(

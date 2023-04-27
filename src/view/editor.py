@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QPlainTextEdit, QTextEdit
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt, QRect, QRectF
 from PyQt5.QtGui import QColor, QTextFormat, QPainter, QTextBlockFormat
 from view.bar import LineNumberBar
 from utils.utils import log, welcome_text
@@ -74,8 +74,8 @@ class Editor(QPlainTextEdit):
                 else:
                     painter.setPen(QColor(75, 81, 97))
                 painter.setFont(self.font())
-                painter.drawText(0, top, self.lineNumberBar.width()-
-                                 2*char_width, height, Qt.AlignRight, number)
+                painter.drawText(0, float(top), float(self.lineNumberBar.width()-
+                                 2*char_width), float(height), Qt.AlignRight, number)
 
             block = block.next()
             top = bottom
