@@ -89,12 +89,12 @@ class MainWindow(QMainWindow):
         splitter2.addWidget(self.terminal)
         splitter2.setOrientation(Qt.Vertical)
         splitter2.setSizes([int(self.height() * (2/3)),
-                           int(self.height() * (1/3))])
+                           self.height() - int(self.height() * (2/3))])
 
         self.splitter.addWidget(splitter1)
         self.splitter.addWidget(splitter2)
         self.splitter.setSizes(
-            [int(self.width() * 0.2), int(self.width() * 0.8)])
+            [int(self.width() * 0.2), self.width() - int(self.width() * 0.2)])
         self.tree.hide()
         self.terminal.hide()
 
@@ -242,6 +242,7 @@ class MainWindow(QMainWindow):
             self.dir = dir_path
             self.update_title()
             self.tree.show()
+            self.terminal.current_directory = dir_path
         if self.editor.display_welcome:
             self.editor.display_welcome = False
             self.editor.setReadOnly(False)

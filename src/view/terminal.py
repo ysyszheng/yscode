@@ -18,7 +18,7 @@ class Terminal(QWidget):
         self.command_input = QLineEdit()
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
-        self.current_directory = os.getcwd()
+        self.current_directory = os.path.expanduser('~')
 
         input_layout = QHBoxLayout()
         input_layout.addWidget(self.command_input)
@@ -98,7 +98,7 @@ class Terminal(QWidget):
         '''
         process = QProcess(self)
         if os.name == 'nt':
-            process.setProgram('cmd')
+            process.setProgram('powershell')
             process.setArguments(['/c', command])
         else:
             process.setProgram('/bin/bash')
