@@ -506,7 +506,7 @@ class MainWindow(QMainWindow):
         fp = os.path.dirname(file_path)
         new_file_name, ok_pressed = QInputDialog.getText(
             self, "Rename", "New name:", QLineEdit.Normal, QDir.toNativeSeparators(fn))
-        if ok_pressed and new_file_path:
+        if ok_pressed and new_file_name:
             new_file_path = os.path.join(fp, new_file_name)
             new_file_path = QDir.toNativeSeparators(new_file_path)
             new_file_path = os.path.join(
