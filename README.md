@@ -4,6 +4,33 @@ A tiny Code Editor
 
 ![YSCODE](./assets/img/demo.png)
 
+Structure
+-----
+```bash
+.
+├── LICENSE
+├── README.md
+├── assets
+│   ├── file
+│   │   └── …
+│   ├── icon
+│   │   ├── …
+│   └── img
+│       └── …
+├── requirements.txt
+├── src
+│   ├── main.py
+│   ├── syntax
+│   │   └── py.py
+│   ├── utils
+│   │   └── utils.py
+│   └── view
+│       ├── bar.py
+│       ├── editor.py
+│       ├── mainwindow.py
+│       └── terminal.py
+```
+
 Env
 -----
 ```bash
@@ -28,7 +55,7 @@ TODO
 - [x] File open/save/edit
 - [x] Toolbar
 - [x] Find and Replace
-- [ ] Syntax Highlighting
+- [x] Syntax Highlighting
 - [x] Add Terminal
 - [x] File Tree
 - [x] Right Click Menu

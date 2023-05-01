@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         self.replace_bar = QLineEdit(self)
         self.jump_bar = QLineEdit(self)
         self.model = QFileSystemModel()
-        self.model.setRootPath('')
+        self.model.setRootPath(QDir.rootPath())
         self.tree = QTreeView()
         self.fnd = False
 
