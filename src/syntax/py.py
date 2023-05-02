@@ -5,26 +5,10 @@ Edited by: Yusen Zheng
 Fixed some bugs and added some features
 '''
 
+import ast
 from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QColor, QTextCharFormat, QFont, QSyntaxHighlighter
-
-
-def format(color, style=''):
-    '''
-    Return a QTextCharFormat with the given attributes.
-    '''
-    _color = QColor()
-    _color.setNamedColor(color)
-    _format = QTextCharFormat()
-    _format.setForeground(_color)
-    if 'bold' in style:
-        _format.setFontWeight(QFont.Bold)
-    if 'italic' in style:
-        _format.setFontItalic(True)
-    if 'italicbold' in style:
-        _format.setFontItalic(True)
-        _format.setFontWeight(QFont.Bold)
-    return _format
+from PyQt5.QtGui import QSyntaxHighlighter
+from utils.utils import format
 
 
 STYLES = {
@@ -36,12 +20,11 @@ STYLES = {
     'magicmethods': format('#6EB4BF'),
     'classes': format('#DABC81'),
     'string': format('#A1C181'),
-    'string2': format('#A1C181'),
+    'triplestring': format('#A1C181'),
     'comment': format('#80838D', 'italic'),
     'self': format('#DABC81', 'italic'),
     'numbers': format('#C0956A'),
 }
-
 
 class Highlighter(QSyntaxHighlighter):
     '''
@@ -53,18 +36,14 @@ class Highlighter(QSyntaxHighlighter):
         'for', 'from', 'global', 'if', 'import', 'in',
         'is', 'lambda', 'not', 'or', 'pass', 'print',
         'raise', 'return', 'super', 'try', 'while', 'yield',
-        'None', 'True', 'False', 'as', 'with',
+        'None', 'True', 'False', 'as', 'with', 'async', 'await',
     ]
 
     operators = [
         '=',
-        # Comparison
         '==', '!=', '<', '<=', '>', '>=',
-        # Arithmetic
         '\+', '-', '\*', '/', '//', '\%', '\*\*',
-        # In-place
         '\+=', '-=', '\*=', '/=', '\%=',
-        # Bitwise
         '\^', '\|', '\&', '\~', '>>', '<<',
     ]
 
@@ -76,11 +55,9 @@ class Highlighter(QSyntaxHighlighter):
         QSyntaxHighlighter.__init__(self, document)
         tri = ("'''")
         trid = ('"""')
-        # Multi-line strings (expression, flag, style)
-        # FIXME: The triple-quotes in these two lines will mess up the
-        # syntax highlighting from this point onward
-        self.tri_single = (QRegExp(tri), 1, STYLES['string2'])
-        self.tri_double = (QRegExp(trid), 2, STYLES['string2'])
+
+        self.tri_single = (QRegExp(tri), 1, STYLES['triplestring'])
+        self.tri_double = (QRegExp(trid), 2, STYLES['triplestring'])
 
         rules = []
 
@@ -103,25 +80,26 @@ class Highlighter(QSyntaxHighlighter):
             # 'self'
             (r'\bself\b', 0, STYLES['self']),
 
-            # Double-quoted string, possibly containing escape sequences ### "\"([^\"]*)\"" ### "\"(\\w)*\""
-            (r'"[^"\\]*(\\.[^"\\]*)*"', 0, STYLES['string']),
-            # Single-quoted string, possibly containing escape sequences
-            (r"'[^'\\]*(\\.[^'\\]*)*'", 0, STYLES['string']),
-
-            # variable names
+            # Variable names
             (r'\b(\w+)\b\s*(?=\=)', 1, STYLES['variable']),
 
-            # function names, followed by an ()
+            # Function names
             (r'\b(\w+)\b\s*(\()', 1, STYLES['functions']),
 
-            # class names
+            # Class names
             (r'\bclass\b\s*(\w+)', 1, STYLES['classes']),
-
-            # From '#' until a newline
-            (r'#[^\n]*', 0, STYLES['comment']),
 
             # Magic methods
             (r'\b__(\w+)__\b', 0, STYLES['magicmethods']),
+
+            # Single line comment
+            (r'#[^\n]*', 0, STYLES['comment']),
+
+            # Single-quoted string, possibly containing escape sequences
+            (r"'(?:\\.|[^'\\])*'", 0, STYLES['string']),
+            
+            # Double-quoted string, possibly containing escape sequences
+            (r'"(?:\\.|[^"\\])*"', 0, STYLES['string']),
         ]
 
         # Build a QRegExp for each pattern
@@ -150,13 +128,23 @@ class Highlighter(QSyntaxHighlighter):
         if not in_multiline:
             in_multiline = self.match_multiline(text, *self.tri_double)
 
+    def in_quotes(self, text, position, delimiter):
+        '''
+        Check if the position is inside quotes
+        '''
+        in_quotes = False
+        quote_delimiters = ['"', "'"]
+        for quote in quote_delimiters:
+            quote_start = text.find(quote, 0, position)
+            quote_end = text.find(quote, position + delimiter.matchedLength())
+            if quote_start >= 0 and quote_end >= 0 and quote_start < position < quote_end:
+                in_quotes = True
+                break
+        return in_quotes
+
     def match_multiline(self, text, delimiter, in_state, style):
         '''
-        Do highlighting of multi-line strings. ``delimiter`` should be a
-        ``QRegExp`` for triple-single-quotes or triple-double-quotes, and
-        ``in_state`` should be a unique integer to represent the corresponding
-        state changes when inside those strings. Returns True if we're still
-        inside a multi-line string when this function is finished.
+        Do highlighting of multi-line strings.
         '''
         # If inside triple-single quotes, start at 0
         if self.previousBlockState() == in_state:
@@ -170,6 +158,11 @@ class Highlighter(QSyntaxHighlighter):
 
         # As long as there's a delimiter match on this line...
         while start >= 0:
+            # Check if the delimiter is inside quotes
+            if self.in_quotes(text, start, delimiter):
+                # Move past this match and continue searching
+                start = delimiter.indexIn(text, start + add)
+                continue
             # Look for the ending delimiter
             end = delimiter.indexIn(text, start + add)
             # Ending delimiter on this line?

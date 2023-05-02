@@ -40,10 +40,13 @@ class MainWindow(QMainWindow):
 
         self.editor.cursorPositionChanged.connect(self.update_status_bar)
         self.editor.cursorPositionChanged.connect(self.reset_fnd)
+        self.editor.textChanged.connect(self.update_title)
         self.find_bar.returnPressed.connect(self.fnd_next)
         self.jump_bar.returnPressed.connect(self.jump)
         self.replace_bar.returnPressed.connect(self.rpl)
         self.tree.doubleClicked.connect(self.open_file_from_tree)
+        self.tree.doubleClicked.connect(self.update_title)
+        self.tree.doubleClicked.connect(self.update_status_bar)
         self.tree.setContextMenuPolicy(Qt.CustomContextMenu)
         self.tree.customContextMenuRequested.connect(self.show_tree_menu)
 
@@ -273,6 +276,8 @@ class MainWindow(QMainWindow):
         else:
             with open(self.editor.path, 'w') as file:
                 file.write(self.editor.toPlainText())
+        self.editor.document().setModified(False)
+        self.update_title()
 
     def save_as(self):
         '''
@@ -337,9 +342,9 @@ class MainWindow(QMainWindow):
         '''
         Update Title
         '''
-        self.setWindowTitle(
-            "%s - %s" % (os.path.basename(self.editor.path) if self.editor.path else "Untitled",
-                         os.path.basename(self.dir) if self.dir else "YSCODE"))
+        is_modified = "*" if self.editor.document().isModified() else ""
+        self.setWindowTitle("%s%s - YSCODE" % (os.path.basename(self.editor.path)
+                            if self.editor.path else "Untitled", is_modified))
 
     def update_status_bar(self):
         '''
@@ -476,9 +481,19 @@ class MainWindow(QMainWindow):
         '''
         Move File or Folder in Tree Menu
         '''
+        is_open = False
+        sub_path = None
         dir_path = QFileDialog.getExistingDirectory(self, 'Open Folder')
+
         if dir_path:
             file_path = self.model.filePath(index)
+            is_folder = QFileInfo(file_path).isDir()
+            if self.editor.path == file_path or self.editor.path.startswith(file_path + os.sep):
+                is_open = True
+                sub_path = self.editor.path[len(file_path):]
+                if self.editor.document().isModified():
+                    self.save_file()
+            
             file_name = os.path.basename(file_path)
             new_file_path = os.path.join(dir_path, file_name)
             if os.path.exists(new_file_path):
@@ -486,26 +501,52 @@ class MainWindow(QMainWindow):
                     self, 'Warning', 'Name already exists!', QMessageBox.Ok)
             else:
                 shutil.move(file_path, new_file_path)
+                if is_open:
+                    if is_folder:
+                        self.editor.path = new_file_path + sub_path
+                    else:
+                        self.editor.path = new_file_path
+                    self.editor.document().setModified(False)
+                    self.update_title()
+                    self.update_status_bar()
 
     def delete_file_or_folder(self, index):
         '''
         Delete File or Folder in Tree Menu
         '''
+        is_open = False
         reply = QMessageBox.question(
             self, 'Delete', 'Are you sure to delete the selected file/folder?', QMessageBox.Yes | QMessageBox.No)
         if reply == QMessageBox.Yes:
+            file_path = self.model.filePath(index)
+            if self.editor.path == file_path or self.editor.path.startswith(file_path + os.sep):
+                is_open = True
             self.model.remove(index)
+            if is_open:
+                self.editor.path = None
+                self.editor.setPlainText('')
+                self.update_title()
+                self.update_status_bar()
 
     def rename_file_or_folder(self, index):
         '''
         Rename File or Folder in Tree Menu
         '''
+        is_open = False
+        sub_path = None
         file_path = self.model.filePath(index)
+        if self.editor.path == file_path or self.editor.path.startswith(file_path + os.sep):
+            is_open = True
+            sub_path = self.editor.path[len(file_path):]
+            if self.editor.document().isModified():
+                self.save_file()
+        
         is_folder = QFileInfo(file_path).isDir()
         fn = os.path.basename(file_path)
         fp = os.path.dirname(file_path)
         new_file_name, ok_pressed = QInputDialog.getText(
             self, "Rename", "New name:", QLineEdit.Normal, QDir.toNativeSeparators(fn))
+        
         if ok_pressed and new_file_name:
             new_file_path = os.path.join(fp, new_file_name)
             new_file_path = QDir.toNativeSeparators(new_file_path)
@@ -514,8 +555,16 @@ class MainWindow(QMainWindow):
             try:
                 if is_folder:
                     os.rename(file_path, new_file_path)
+                    if is_open:
+                        self.editor.path = new_file_path + sub_path
                 else:
                     shutil.move(file_path, new_file_path)
+                    if is_open:
+                        self.editor.path = new_file_path
+                if is_open:
+                    self.editor.document().setModified(False)
+                    self.update_title()
+                    self.update_status_bar()
             except OSError as e:
                 QMessageBox.warning(self, "Error", f"Failed to rename: {e}")
 
