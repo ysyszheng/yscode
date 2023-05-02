@@ -1,6 +1,6 @@
 YSCODE
 =====
-A tiny Code Editor
+A tiny Code Editor for macOS (Linux and Windows are not fully tested, but should work). It is written in Python using PyQt5.
 
 ![YSCODE](./assets/img/demo.png)
 

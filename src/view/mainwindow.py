@@ -488,6 +488,7 @@ class MainWindow(QMainWindow):
         if dir_path:
             file_path = self.model.filePath(index)
             is_folder = QFileInfo(file_path).isDir()
+
             if self.editor.path == file_path or self.editor.path.startswith(file_path + os.sep):
                 is_open = True
                 sub_path = self.editor.path[len(file_path):]
@@ -506,7 +507,6 @@ class MainWindow(QMainWindow):
                         self.editor.path = new_file_path + sub_path
                     else:
                         self.editor.path = new_file_path
-                    self.editor.document().setModified(False)
                     self.update_title()
                     self.update_status_bar()
 
@@ -521,6 +521,7 @@ class MainWindow(QMainWindow):
             file_path = self.model.filePath(index)
             if self.editor.path == file_path or self.editor.path.startswith(file_path + os.sep):
                 is_open = True
+            
             self.model.remove(index)
             if is_open:
                 self.editor.path = None
@@ -562,9 +563,9 @@ class MainWindow(QMainWindow):
                     if is_open:
                         self.editor.path = new_file_path
                 if is_open:
-                    self.editor.document().setModified(False)
                     self.update_title()
                     self.update_status_bar()
+
             except OSError as e:
                 QMessageBox.warning(self, "Error", f"Failed to rename: {e}")
 
